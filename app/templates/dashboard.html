@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="board-toolbar">
+    <div>
+      <h1>Hi {{ user.display_name.split()[0] }}</h1>
+      <p class="subtitle" style="margin:0">
+        {{ household.today.strftime("%A %d %B") }}
+      </p>
+    </div>
+    <div class="toggle-group">
+      <a href="/" class="{{ '' if board.mine_only else 'active' }}">Everyone</a>
+      <a href="/?mine=1" class="{{ 'active' if board.mine_only }}">Only mine</a>
+    </div>
+  </div>
+
+  {% include "partials/board.html" %}
+{% endblock %}

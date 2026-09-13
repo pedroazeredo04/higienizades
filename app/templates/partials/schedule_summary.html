@@ -1,0 +1,10 @@
+{#- One-line description of a chore's rule. Expects `chore`. -#}
+{% if chore.recurrence == "once" %}One-off
+{%- elif chore.recurrence == "daily" %}Every day
+{%- elif chore.recurrence == "every_n_days" %}Every {{ chore.interval_n }} days
+{%- elif chore.recurrence == "weekly" %}Every {{ weekday_names[chore.weekday] }}
+{%- else %}Monthly on day {{ chore.day_of_month }}{% endif %}
+&middot;
+{% if chore.assignment_mode == "rotation" %}rotating
+{%- elif chore.assignment_mode == "anyone" %}anyone
+{%- else %}always {{ chore.fixed_user.display_name if chore.fixed_user else "someone" }}{% endif %}

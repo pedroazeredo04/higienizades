@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.env
+
+# The database and its backups live here. The directory itself is tracked so
+# that a fresh clone already owns it -- otherwise Docker creates the bind mount
+# as root and the non-root container user cannot write to it.
+data/*
+!data/.gitkeep
+higienizades.egg-info/

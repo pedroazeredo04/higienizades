@@ -1,0 +1,46 @@
+{# One open occurrence. `instance`, `board` and `household` come from the caller. #}
+{% set chore = instance.chore %}
+{% set assignee = instance.assigned_user %}
+{% set overdue = instance.due_date < household.today %}
+{% set mine = 1 if board.mine_only else 0 %}
+<div class="row {{ 'overdue' if overdue else ('today' if instance.due_date == household.today) }}"
+     id="instance-{{ instance.id }}">
+
+  {% if assignee %}
+    <span class="avatar" style="background: {{ assignee.color }}"
+          title="{{ assignee.display_name }}">{{ assignee.display_name | initials }}</span>
+  {% else %}
+    <span class="avatar anyone" title="Anyone can do this">&bull;&bull;</span>
+  {% endif %}
+
+  <div class="row-main">
+    <div class="row-title">
+      {{ chore.name }}
+      <span class="points-badge">{{ chore.points }} pt</span>
+    </div>
+    <div class="row-meta">
+      <span class="{{ 'late' if overdue else ('soon' if instance.due_date == household.today) }}">
+        {{ instance.due_date | due_label(household.today) }}</span>
+      &middot; {{ assignee.display_name if assignee else "Anyone" }}
+      {% if chore.description %}<br>{{ chore.description }}{% endif %}
+    </div>
+    <div class="row-more">
+      <button class="btn-quiet"
+              hx-post="/instances/{{ instance.id }}/postpone"
+              hx-target="#board" hx-swap="outerHTML"
+              hx-vals='{"days": "2", "mine": "{{ mine }}"}'>Postpone 2d</button>
+      <button class="btn-quiet"
+              hx-post="/instances/{{ instance.id }}/skip"
+              hx-target="#board" hx-swap="outerHTML"
+              hx-confirm="Skip this one? It moves to the next occurrence and scores nothing."
+              hx-vals='{"mine": "{{ mine }}"}'>Skip</button>
+    </div>
+  </div>
+
+  <div class="row-actions">
+    <button class="btn-done"
+            hx-post="/instances/{{ instance.id }}/complete"
+            hx-target="#board" hx-swap="outerHTML"
+            hx-vals='{"mine": "{{ mine }}"}'>&check; Done</button>
+  </div>
+</div>

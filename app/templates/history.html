@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>History</h1>
+  <p class="subtitle">Every completion and skip, newest first.</p>
+
+  <form class="card" method="get" action="/history">
+    <div class="field-row">
+      <div>
+        <label for="user_id">Flatmate</label>
+        <select id="user_id" name="user_id" onchange="this.form.submit()">
+          <option value="">Everyone</option>
+          {% for mate in flatmates %}
+            <option value="{{ mate.id }}" {{ "selected" if filter_user_id == mate.id }}>
+              {{ mate.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="chore_id">Chore</label>
+        <select id="chore_id" name="chore_id" onchange="this.form.submit()">
+          <option value="">All chores</option>
+          {% for chore in chores %}
+            <option value="{{ chore.id }}" {{ "selected" if filter_chore_id == chore.id }}>
+              {{ chore.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <noscript><button class="btn-sm" type="submit">Filter</button></noscript>
+  </form>
+
+  <div class="card">
+    {% for entry in entries %}
+      <div class="log {{ entry.kind }}">
+        {% if entry.actor %}
+          <span class="avatar" style="background: {{ entry.actor.color }}">
+            {{ entry.actor.display_name | initials }}</span>
+        {% else %}
+          <span class="avatar anyone">&bull;&bull;</span>
+        {% endif %}
+        <div class="log-body">
+          <div class="log-title">
+            <strong>{{ entry.chore_name }}</strong>
+            {% if entry.kind == "done" %}
+              <span class="points-badge">+{{ entry.points }}</span>
+            {% else %}
+              <span class="tag">skipped</span>
+            {% endif %}
+          </div>
+          <div class="log-when">
+            {{ entry.actor.display_name if entry.actor else "Someone" }}
+            {%- if entry.assigned_user and entry.actor
+                   and entry.assigned_user.id != entry.actor.id %}
+              (assigned to {{ entry.assigned_user.display_name }})
+            {%- endif %}
+            &middot; {{ entry.when | local_datetime(household.timezone) }}
+            {% if entry.note %}<br><em>{{ entry.note }}</em>{% endif %}
+          </div>
+        </div>
+        {% if entry.completion_id in undoable %}
+          <form class="inline-form" method="post"
+                action="/history/{{ entry.completion_id }}/undo"
+                onsubmit="return confirm('Undo this completion? The points go back and the chore reopens.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="btn-quiet" type="submit">Undo</button>
+          </form>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="empty">Nothing logged yet.</div>
+    {% endfor %}
+  </div>
+
+  {% if page_number > 1 or has_next %}
+    {% set base = "/history?" ~ ("user_id=" ~ filter_user_id ~ "&" if filter_user_id else "")
+                             ~ ("chore_id=" ~ filter_chore_id ~ "&" if filter_chore_id else "") %}
+    <div class="pager">
+      {% if page_number > 1 %}
+        <a class="btn btn-sm" href="{{ base }}page_number={{ page_number - 1 }}">&larr; Newer</a>
+      {% else %}<span></span>{% endif %}
+      {% if has_next %}
+        <a class="btn btn-sm" href="{{ base }}page_number={{ page_number + 1 }}">Older &rarr;</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

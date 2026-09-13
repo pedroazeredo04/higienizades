@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>{{ "Edit chore" if chore else "New chore" }}</h1>
+  <p class="subtitle">
+    {% if chore %}
+      Name, description and points apply immediately. Schedule and assignment
+      changes only touch the open occurrence if you leave the box below ticked.
+    {% else %}
+      Recurring chores keep exactly one open occurrence at a time; the next one
+      appears as soon as this one is ticked off.
+    {% endif %}
+  </p>
+
+  {% if form.errors %}
+    <div class="alert error">
+      {% for message in form.errors %}<div>{{ message }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="{{ '/chores/' ~ chore.id if chore else '/chores' }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="card">
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" name="name" type="text" value="{{ form.name }}" required autofocus>
+      </div>
+      <div class="field">
+        <label for="description">Description <span class="hint">(optional)</span></label>
+        <textarea id="description" name="description">{{ form.description }}</textarea>
+      </div>
+      <div class="field">
+        <label for="points">Points</label>
+        <input id="points" name="points" type="number" min="0" max="100" value="{{ form.points }}">
+        <p class="hint">Weight the effort: taking out the trash 1, scrubbing the bathroom 5.</p>
+      </div>
+    </div>
+
+    <fieldset>
+      <legend>How often</legend>
+      <div class="field">
+        <select id="recurrence" name="recurrence" onchange="syncChoreForm()">
+          {% for value, label in [
+              ("once", "One-off"), ("daily", "Every day"),
+              ("every_n_days", "Every N days"), ("weekly", "Weekly"),
+              ("monthly", "Monthly")] %}
+            <option value="{{ value }}" {{ "selected" if form.recurrence == value }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field" data-when-recurrence="every_n_days">
+        <label for="interval_n">Repeat every</label>
+        <input id="interval_n" name="interval_n" type="number" min="1" max="365"
+               value="{{ form.interval_n or 3 }}">
+        <p class="hint">Days between occurrences, counted from the last due date.</p>
+      </div>
+
+      <div class="field" data-when-recurrence="weekly">
+        <label for="weekday">Day of the week</label>
+        <select id="weekday" name="weekday">
+          {% for index in range(7) %}
+            <option value="{{ index }}" {{ "selected" if form.weekday == index }}>
+              {{ weekday_names[index] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field" data-when-recurrence="monthly">
+        <label for="day_of_month">Day of the month</label>
+        <input id="day_of_month" name="day_of_month" type="number" min="1" max="28"
+               value="{{ form.day_of_month or 1 }}">
+        <p class="hint">1&ndash;28, so the chore also exists in February.</p>
+      </div>
+
+      {% if not chore %}
+      <div class="field">
+        <label for="start_date">First due <span class="hint">(optional)</span></label>
+        <input id="start_date" name="start_date" type="date"
+               value="{{ form.start_date.isoformat() if form.start_date else '' }}">
+        <p class="hint">Leave blank to start at the next natural slot.</p>
+      </div>
+      {% endif %}
+    </fieldset>
+
+    <fieldset>
+      <legend>Who does it</legend>
+      <div class="field">
+        <select id="assignment_mode" name="assignment_mode" onchange="syncChoreForm()">
+          {% for value, label in [
+              ("rotation", "Rotate through the household"),
+              ("fixed", "Always the same person"),
+              ("anyone", "Anyone can pick it up")] %}
+            <option value="{{ value }}" {{ "selected" if form.assignment_mode == value }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field" data-when-mode="fixed">
+        <label for="fixed_user_id">Flatmate</label>
+        <select id="fixed_user_id" name="fixed_user_id">
+          <option value="">Choose&hellip;</option>
+          {% for mate in flatmates %}
+            <option value="{{ mate.id }}" {{ "selected" if form.fixed_user_id == mate.id }}>
+              {{ mate.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field" data-when-mode="rotation">
+        <label>Rotation roster</label>
+        {% for mate in flatmates %}
+          <label class="check">
+            <input type="checkbox" name="roster_ids" value="{{ mate.id }}"
+                   {{ "checked" if mate.id in form.roster_ids }}>
+            {{ mate.display_name }}
+          </label>
+        {% endfor %}
+        <p class="hint">
+          Tick nobody to include everyone. The rotation follows the order shown here.
+        </p>
+      </div>
+    </fieldset>
+
+    {% if chore %}
+      <label class="check">
+        <input type="checkbox" name="apply_to_open" checked>
+        Also update the occurrence that&rsquo;s currently open
+      </label>
+      <p class="hint" style="margin-bottom:0">
+        Leave ticked to move the open chore onto the new schedule now. Untick if
+        someone already agreed to take this one as it stands.
+      </p>
+    {% endif %}
+
+    <div class="form-actions">
+      <button class="primary" type="submit">{{ "Save changes" if chore else "Create chore" }}</button>
+      <a class="btn" href="/chores">Cancel</a>
+    </div>
+  </form>
+
+<script>
+  // Show only the fields that apply to the chosen recurrence and assignment mode.
+  function syncChoreForm() {
+    var recurrence = document.getElementById('recurrence').value;
+    var mode = document.getElementById('assignment_mode').value;
+    document.querySelectorAll('[data-when-recurrence]').forEach(function (el) {
+      el.hidden = el.dataset.whenRecurrence !== recurrence;
+    });
+    document.querySelectorAll('[data-when-mode]').forEach(function (el) {
+      el.hidden = el.dataset.whenMode !== mode;
+    });
+  }
+  syncChoreForm();
+</script>
+{% endblock %}

@@ -1,0 +1,6 @@
+{# Out-of-band: keeps the navbar counters in step with the board. #}
+<span class="chip alert" id="overdue-chip" hx-swap-oob="true"
+      {% if not nav.overdue_count %}hidden{% endif %}>
+  {{ nav.overdue_count }} overdue
+</span>
+<span class="chip" id="points-chip" hx-swap-oob="true">{{ nav.my_points }} pts</span>

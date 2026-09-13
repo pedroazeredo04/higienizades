@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4f46e5">
+  <title>{% block title %}{{ household.name if household else 'higienizades' }} chores{% endblock %}</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/htmx.min.js" defer></script>
+</head>
+{# hx-headers on <body> is inherited by every HTMX request in the page, so CSRF
+   needs no per-form wiring. #}
+<body hx-headers='{"X-CSRF-Token": "{{ csrf_token }}"}'>
+
+{% if user %}
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/">{{ household.name }}<small>chores</small></a>
+    {% if nav and nav.overdue_count %}
+      <span class="chip alert" id="overdue-chip" title="Overdue chores">
+        {{ nav.overdue_count }} overdue
+      </span>
+    {% else %}
+      <span class="chip alert" id="overdue-chip" hidden></span>
+    {% endif %}
+    <span class="chip" id="points-chip" title="Your all-time points">
+      {{ nav.my_points if nav else 0 }} pts
+    </span>
+  </div>
+  <nav class="tabs">
+    {% set path = request.url.path %}
+    <a href="/" class="{{ 'active' if path == '/' }}">Board</a>
+    <a href="/chores" class="{{ 'active' if path.startswith('/chores') }}">Chores</a>
+    <a href="/leaderboard" class="{{ 'active' if path.startswith('/leaderboard') }}">Leaderboard</a>
+    <a href="/history" class="{{ 'active' if path.startswith('/history') }}">History</a>
+    <a href="/settings" class="{{ 'active' if path.startswith('/settings') }}">Settings</a>
+  </nav>
+</header>
+{% endif %}
+
+<main>
+  {% if flash %}<div class="alert {{ flash.level }}">{{ flash.message }}</div>{% endif %}
+  {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+<div id="toast"></div>
+
+<script>
+  // Toasts arrive as out-of-band swaps from the board; clear them after a beat.
+  document.body.addEventListener('htmx:afterSwap', function () {
+    var toast = document.querySelector('#toast .alert');
+    if (toast) setTimeout(function () { toast.remove(); }, 3500);
+  });
+</script>
+</body>
+</html>

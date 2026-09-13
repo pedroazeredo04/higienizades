@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    container_name: higienizades
+    # Comes back after a crash and after a power cut, with no systemd unit of
+    # your own to write and no SSH.
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
+      DATABASE_URL: sqlite:////data/higienizades.db
+      BACKUP_DIR: /data/backups
+      DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-America/Sao_Paulo}
+      TZ: ${DEFAULT_TIMEZONE:-America/Sao_Paulo}

@@ -1,0 +1,38 @@
+[project]
+name = "higienizades"
+version = "1.0.0"
+description = "Self-hosted flatmate chore scheduler for a home LAN"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlmodel>=0.0.22",
+    "alembic>=1.14",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.12",
+    "itsdangerous>=2.2",
+    "pydantic-settings>=2.6",
+    "passlib>=1.7.4",
+    "argon2-cffi>=23.1",
+    "apscheduler>=3.10,<4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "httpx>=0.27",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# Alembic writes these; they are not hand-maintained.
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

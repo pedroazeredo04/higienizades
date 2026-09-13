@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="board-toolbar">
+    <div>
+      <h1>Chores</h1>
+      <p class="subtitle" style="margin:0">The rules that generate the board.</p>
+    </div>
+    <a class="btn btn-primary" href="/chores/new">+ New chore</a>
+  </div>
+
+  {% if not chores %}
+    <div class="empty">
+      <span class="big">&#128203;</span>
+      No chores yet. Add the first one.
+    </div>
+  {% endif %}
+
+  {% for chore in chores %}
+    {% set instance = open_instances.get(chore.id) %}
+    <div class="row">
+      <div class="row-main">
+        <div class="row-title">
+          {{ chore.name }}
+          <span class="points-badge">{{ chore.points }} pt</span>
+          {% if not chore.is_active %}<span class="tag off">archived</span>{% endif %}
+        </div>
+        <div class="row-meta">
+          {% include "partials/schedule_summary.html" %}
+          {% if instance %}
+            &middot; {{ instance.due_date | due_label(household.today) | lower }}
+            {%- if instance.assigned_user %} &middot; {{ instance.assigned_user.display_name }}{% endif %}
+          {% endif %}
+        </div>
+        <div class="row-more">
+          {% if chore.is_active %}
+            <a class="btn-quiet" href="/chores/{{ chore.id }}/edit">Edit</a>
+            <form class="inline-form" method="post" action="/chores/{{ chore.id }}/archive"
+                  onsubmit="return confirm('Archive this chore? Its history keeps counting.')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="btn-quiet" type="submit">Archive</button>
+            </form>
+          {% else %}
+            <form class="inline-form" method="post" action="/chores/{{ chore.id }}/unarchive">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="btn-quiet" type="submit">Restore</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Settings</h1>
+  <p class="subtitle">Household preferences and your account.</p>
+
+  {% if user.is_admin %}
+  <div class="card">
+    <h2 style="margin-top:0">Household</h2>
+    <form method="post" action="/settings/household">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field">
+        <label for="household_name">Name</label>
+        <input id="household_name" name="household_name" type="text"
+               value="{{ household.name }}" required>
+      </div>
+      <div class="field">
+        <label for="timezone">Timezone</label>
+        <input id="timezone" name="timezone" type="text" value="{{ household.timezone }}" required>
+        <p class="hint">
+          An IANA name such as <code>America/Sao_Paulo</code>. This decides when a
+          chore flips to overdue, so it should match where you actually live.
+        </p>
+      </div>
+      <button class="primary" type="submit">Save</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Household code</h2>
+    <p>New flatmates need this to register.</p>
+    <p><strong style="font-size:22px; letter-spacing:.12em">{{ household.join_code }}</strong></p>
+    <form method="post" action="/settings/join-code"
+          onsubmit="return confirm('Generate a new code? The old one stops working.')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="btn-sm" type="submit">Generate a new code</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Flatmates</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Name</th><th>Username</th><th></th></tr></thead>
+        <tbody>
+        {% for mate in flatmates %}
+          <tr>
+            <td>
+              {{ mate.display_name }}
+              {% if mate.is_admin %}<span class="tag admin">admin</span>{% endif %}
+              {% if not mate.is_active %}<span class="tag off">inactive</span>{% endif %}
+            </td>
+            <td class="muted">{{ mate.username }}</td>
+            <td style="white-space:nowrap">
+              <form class="inline-form" method="post"
+                    action="/settings/users/{{ mate.id }}/toggle-admin">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="btn-quiet" type="submit">
+                  {{ "Remove admin" if mate.is_admin else "Make admin" }}</button>
+              </form>
+              {% if mate.id != user.id %}
+                <form class="inline-form" method="post"
+                      action="/settings/users/{{ mate.id }}/toggle-active">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button class="btn-quiet {{ 'btn-danger' if mate.is_active }}" type="submit">
+                    {{ "Deactivate" if mate.is_active else "Reactivate" }}</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">
+      Deactivating drops someone out of every rotation but keeps their history and
+      their all-time points.
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2 style="margin-top:0">Your password</h2>
+    <form method="post" action="/settings/password">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field">
+        <label for="current_password">Current password</label>
+        <input id="current_password" name="current_password" type="password"
+               autocomplete="current-password" required>
+      </div>
+      <div class="field">
+        <label for="new_password">New password</label>
+        <input id="new_password" name="new_password" type="password"
+               autocomplete="new-password" required>
+      </div>
+      <div class="field">
+        <label for="confirm_password">Repeat new password</label>
+        <input id="confirm_password" name="confirm_password" type="password"
+               autocomplete="new-password" required>
+      </div>
+      <button class="primary" type="submit">Change password</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Signed in as {{ user.display_name }}</h2>
+    <form method="post" action="/logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Sign out</button>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,27 @@
+<div id="board">
+  {% if board.is_empty %}
+    <div class="empty">
+      <span class="big">&#10003;</span>
+      {% if board.mine_only %}
+        Nothing assigned to you right now.
+      {% else %}
+        Nothing due. Add a chore to get started.
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if board.overdue %}
+    <h2>Overdue</h2>
+    {% for instance in board.overdue %}{% include "partials/chore_row.html" %}{% endfor %}
+  {% endif %}
+
+  {% if board.due_today %}
+    <h2>Due today</h2>
+    {% for instance in board.due_today %}{% include "partials/chore_row.html" %}{% endfor %}
+  {% endif %}
+
+  {% if board.upcoming %}
+    <h2>Upcoming</h2>
+    {% for instance in board.upcoming %}{% include "partials/chore_row.html" %}{% endfor %}
+  {% endif %}
+</div>

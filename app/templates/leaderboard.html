@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Leaderboard</h1>
+  <p class="subtitle">Who has actually been doing the cleaning.</p>
+
+  <div class="toggle-group" style="margin-bottom:16px">
+    {% for key, label in periods.items() %}
+      <a href="/leaderboard?period={{ key }}"
+         class="{{ 'active' if period == key }}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    {% for row in rows %}
+      <div class="lb-row">
+        <div class="lb-rank">{{ loop.index }}</div>
+        <span class="avatar" style="background: {{ row.user.color }}">
+          {{ row.user.display_name | initials }}</span>
+        <div class="lb-body">
+          <div class="lb-name">
+            <span>{{ row.user.display_name }}{% if not row.user.is_active %}
+              <span class="tag off">past</span>{% endif %}</span>
+            <span>{{ row.points }} pt</span>
+          </div>
+          <div class="lb-bar"><span style="width: {{ (row.share * 100) | round(1) }}%"></span></div>
+          <div class="lb-sub">
+            {{ row.completions }} chore{{ "" if row.completions == 1 else "s" }}
+            &middot; {{ row.points_per_week }} pt/week
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">Nothing scored yet. Tick something off the board.</div>
+    {% endfor %}
+  </div>
+
+  <p class="hint">
+    All-time totals favour whoever has lived here longest, so the per-week figure
+    normalises by how long each person has been in the household.
+  </p>
+{% endblock %}

@@ -1,0 +1,4 @@
+{# Out-of-band toast slot. Auto-dismissed by the snippet in base.html. #}
+<div id="toast" hx-swap-oob="true">
+  {% if toast %}<div class="alert {{ toast_level }}">{{ toast }}</div>{% endif %}
+</div>

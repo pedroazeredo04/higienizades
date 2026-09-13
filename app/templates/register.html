@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth">
+  <h1>{% if has_users %}Join the household{% else %}Set up the household{% endif %}</h1>
+  <p class="subtitle">
+    {% if has_users %}
+      You will need the household code &mdash; ask a flatmate.
+    {% else %}
+      You are first, so this account becomes the admin.
+    {% endif %}
+  </p>
+  <div class="card">
+    <form method="post" action="/register">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field">
+        <label for="display_name">Your name</label>
+        <input id="display_name" name="display_name" type="text" autocomplete="name"
+               value="{{ display_name or '' }}" required autofocus>
+      </div>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username"
+               autocapitalize="none" value="{{ username or '' }}" required>
+        <p class="hint">Letters and numbers only.</p>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password"
+               autocomplete="new-password" required>
+        <p class="hint">
+          At least 6 characters. This travels over your home wifi unencrypted, so
+          pick something you do not use anywhere else.
+        </p>
+      </div>
+      <div class="field">
+        <label for="password_confirm">Repeat password</label>
+        <input id="password_confirm" name="password_confirm" type="password"
+               autocomplete="new-password" required>
+      </div>
+      {% if has_users %}
+      <div class="field">
+        <label for="join_code">Household code</label>
+        <input id="join_code" name="join_code" type="text" autocapitalize="characters" required>
+      </div>
+      {% endif %}
+      <button class="primary" type="submit" style="width:100%">
+        {% if has_users %}Join{% else %}Create household{% endif %}
+      </button>
+    </form>
+  </div>
+  <p class="subtitle">Already have an account? <a href="/login">Sign in</a>.</p>
+</div>
+{% endblock %}
