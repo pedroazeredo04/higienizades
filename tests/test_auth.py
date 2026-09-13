@@ -115,9 +115,8 @@ def test_post_without_csrf_token_is_refused(client):
         data={"name": "Sneaky", "points": "1", "recurrence": "daily", "assignment_mode": "anyone"},
         follow_redirects=False,
     )
-    # Bounced to login rather than accepted.
-    assert response.status_code == 303
-    assert response.headers["location"] == "/login"
+    assert response.status_code == 400
+    assert "gone stale" in response.text
 
 
 def test_deactivated_user_cannot_use_their_session(client, session):
@@ -145,3 +144,46 @@ def test_non_admin_cannot_change_household_settings(client, session):
         },
     )
     assert response.status_code == 403
+
+
+def test_stale_csrf_token_explains_itself_instead_of_looping(client):
+    """The iPhone bug: a cached page replays a token from an older session.
+
+    Silently redirecting back to the form made this look like a dead "Sign in"
+    button, because the page it returned to was the same cached one.
+    """
+    register(client, "pedro", "Pedro")
+    logout(client)
+    stale = csrf(client, "/login")
+
+    client.cookies.clear()  # a new session, as a fresh cookie would give
+    csrf(client, "/login")
+
+    response = client.post(
+        "/login",
+        data={"csrf_token": stale, "username": "pedro", "password": "hunter2"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 400
+    assert "gone stale" in response.text
+    assert "Block All Cookies" in response.text  # the iPhone-specific hint
+    assert 'href="/login"' in response.text  # and a way back
+
+
+def test_pages_are_never_cached_but_static_assets_are(client):
+    """Pages embed a per-session CSRF token, so they must not be cached.
+
+    This is what stops Safari replaying a stale login form.
+    """
+    register(client, "pedro", "Pedro")
+    for path in ("/", "/login", "/chores", "/leaderboard", "/history", "/settings"):
+        assert client.get(path).headers.get("cache-control") == "no-store", path
+
+    assert client.get("/static/app.css").headers.get("cache-control") != "no-store"
+
+
+def test_login_still_works_normally_after_the_fix(client):
+    register(client, "pedro", "Pedro")
+    logout(client)
+    login(client, "pedro")
+    assert client.get("/").status_code == 200

@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>{{ title }}</h1>
-  <p class="subtitle">{{ message }}</p>
-  <a class="btn" href="/">Back to the board</a>
+  <div class="auth">
+    <h1>{{ title }}</h1>
+    <p class="subtitle">{{ message }}</p>
+    {% if detail %}<p class="hint">{{ detail }}</p>{% endif %}
+    <a class="btn btn-primary" href="{{ back_url | default('/', true) }}"
+       style="width:100%">{{ back_label | default('Back to the board', true) }}</a>
+  </div>
 {% endblock %}

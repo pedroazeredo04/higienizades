@@ -38,6 +38,17 @@ class NotAuthenticated(Exception):
     """Bounces the browser to the login page."""
 
 
+class CsrfFailure(Exception):
+    """The submitted token did not match the session.
+
+    In practice this almost never means an attack -- it means the browser
+    replayed a cached page whose token belongs to an older session, or it is
+    not storing the session cookie at all. Both need to be *shown* to the user,
+    which is why this is separate from NotAuthenticated: redirecting silently
+    back to the form makes a stuck login look like a dead button.
+    """
+
+
 class NotAuthorised(Exception):
     """Signed in, but this needs an admin."""
 
@@ -92,7 +103,7 @@ async def verify_csrf(request: Request) -> None:
         form = await request.form()
         sent = str(form.get("csrf_token") or "")
     if not expected or not sent or not secrets.compare_digest(expected, sent):
-        raise NotAuthenticated("Your session expired. Please sign in again.")
+        raise CsrfFailure
 
 
 def current_user(request: Request, session: Annotated[Session, Depends(get_session)]) -> User:

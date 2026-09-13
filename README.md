@@ -222,6 +222,21 @@ sudo chown -R 1000:1000 data
 docker compose restart
 ```
 
+**"Sign in" does nothing on an iPhone.** Pages are served `no-store` precisely
+to stop this: every page embeds a CSRF token tied to the session cookie, and
+Safari on iOS will otherwise replay a cached login form carrying a token from an
+older session. If you are running a build from before that fix, update. If it
+still happens, the browser is not keeping cookies — check Settings → Apps →
+Safari → **Block All Cookies** is off, and that it is not a Private Browsing tab.
+
+To tell the two apart, watch `docker compose logs -f` while they tap Sign in:
+
+- `POST /login ... 400` — the form was stale or the cookie is missing (above).
+- `POST /login ... 303` then straight back to the login page — the cookie is
+  being set but not sent back.
+- **nothing at all** — the request never left the phone. Check the address was
+  typed with an explicit `http://`, and disable any content blocker.
+
 **`http://higienizades.local:3000` doesn't resolve** on one device. Use the IP
 instead; mDNS support varies. `hostname -I` on the Pi tells you the address, and
 a DHCP reservation in your router keeps it stable.
